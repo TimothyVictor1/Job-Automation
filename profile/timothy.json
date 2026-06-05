@@ -1,0 +1,423 @@
+{
+  "personal": {
+    "name": "Timothy Victor Rachuri",
+    "email": "YOUR_EMAIL@gmail.com",
+    "phone": "+46XXXXXXXXX",
+    "location": "Karlskrona, Sweden",
+    "linkedin": "https://linkedin.com/in/YOUR_HANDLE",
+    "github": "https://github.com/YOUR_HANDLE",
+    "portfolio": ""
+  },
+
+  "tagline": "Agentic AI Systems Builder · Production AI for Government & Enterprise · Karlskrona, Sweden",
+
+  "summary": "AI engineer specializing in production agentic systems — multi-agent orchestration, RAG architectures, and GDPR-compliant AI workflows deployed for Swedish government and enterprise clients. Built and delivered end-to-end AI systems at Tech Concept Lab (Blue Science Park), including a live conversational booking agent and an advancing government casework automation pipeline. Research background in AI safety guardrails and empirical software engineering at BTH. Hands-on across the full stack: LLM orchestration, backend APIs, vector databases, and cloud deployment.",
+
+  "skills": {
+    "ai_ml": [
+      "LangGraph", "LangChain", "Claude API", "Anthropic Tool Use", "OpenAI GPT",
+      "RAG (Retrieval-Augmented Generation)", "Semantic Routing", "Prompt Engineering",
+      "Multi-agent Orchestration", "LSTM", "Autoencoders", "Isolation Forest",
+      "TensorFlow", "PyTorch", "Ollama (local LLMs)", "ChromaDB", "Qdrant",
+      "Azure OpenAI", "Cohere Embeddings", "MCP (Model Context Protocol)"
+    ],
+    "automation_orchestration": [
+      "n8n Cloud", "n8n self-hosted", "LangGraph", "Webhook-driven pipelines",
+      "Multi-role workflow routing", "Agentic loop design"
+    ],
+    "languages": ["Python", "TypeScript", "JavaScript", "SQL"],
+    "frameworks_tools": [
+      "FastAPI", "Next.js", "React", "Streamlit", "Playwright",
+      "Microsoft Presidio", "PyMuPDF", "Boto3", "Pillow"
+    ],
+    "databases": [
+      "Supabase", "PostgreSQL", "ChromaDB", "Qdrant", "Upstash Redis", "SQLite"
+    ],
+    "infrastructure": [
+      "Vercel", "Docker", "AWS Lambda", "AWS S3", "AWS CloudWatch", "AWS IAM",
+      "Cloudflare Workers", "MQTT broker", "ClickUp API"
+    ],
+    "compliance_security": [
+      "GDPR by design", "EU AI Act (Articles 14/26)", "PII tokenization",
+      "Zero data retention architecture", "Session-scoped data handling",
+      "EU-region cloud deployment"
+    ],
+    "research_methods": [
+      "Mining Software Repositories (MSR)", "Adversarial mutation testing",
+      "Empirical software engineering", "AI safety guardrail design",
+      "Multi-agent evaluation", "Quantitative metric design (V-Ratio)"
+    ],
+    "design": [
+      "UI/UX Design", "Figma", "Brand identity", "Design systems",
+      "Government dashboard design", "Data visualisation"
+    ]
+  },
+
+  "projects": [
+    {
+      "id": "forsakringskassan",
+      "title": "Agentic Case Management System",
+      "client": "Försäkringskassan (Swedish Social Insurance Agency)",
+      "company": "Tech Concept Lab · Blue Science Park",
+      "status": "Prototype → Advancing to production deployment",
+      "role": "Sole AI engineer — full ownership: design, build, delivery",
+      "tags": [
+        "agentic", "production", "government", "swedish", "gdpr", "compliance",
+        "n8n", "claude", "supabase", "rag", "classification", "tool-use",
+        "eu-ai-act", "casework", "automation", "llm-orchestration", "vercel"
+      ],
+      "problem": "Caseworkers manually processed multi-step document collection, identity verification, and benefit assessment — error-prone, slow, and limited by human bandwidth.",
+      "bullets": [
+        "Built end-to-end agentic AI system automating the full casework pipeline: document intake, identity verification, multi-step validation, and AI-generated assessment drafting",
+        "Implemented Anthropic Tool Use (tool_choice: 'any') for structured JSON output — switched from prompt-based JSON after diagnosing silent parsing failures in production",
+        "Designed 12-category semantic router classifying all Swedish benefit types (vab, sick, parental, disability, housing, dental, and 6 more) using Claude Sonnet",
+        "Built full GDPR compliance architecture: session-scoped data, zero retention, EU-region deployment — compliant by design, not by policy",
+        "Deployed to Vercel (framtidskassan project); prototype presented and approved, advancing toward full government production deployment"
+      ],
+      "tech_stack": ["Claude API (claude-sonnet-4-6)", "n8n Cloud", "Supabase", "Anthropic Tool Use", "Vercel", "GDPR-compliant architecture"],
+      "impact": "Prototype approved by Försäkringskassan — advancing to production at a Swedish government agency"
+    },
+
+    {
+      "id": "paraply-booking",
+      "title": "Agentic Room & Meeting Booking System",
+      "client": "Paraply / The Pot (World Trade Center Karlskrona & Karlshamn)",
+      "company": "Tech Concept Lab · Blue Science Park",
+      "status": "Production — live and operating",
+      "role": "AI engineer — designed full architecture, built and deployed",
+      "tags": [
+        "agentic", "production", "conversational-ai", "n8n", "claude", "qdrant",
+        "redis", "pii", "gdpr", "mcp", "booking", "swedish", "real-time",
+        "llm-orchestration", "security", "clickup", "presidio"
+      ],
+      "problem": "All bookings arrived by email. One person manually checked a ClickUp calendar and pricing doc, replied by hand. Limited to business hours — fully manual, no automation.",
+      "bullets": [
+        "Built conversational AI agent handling the complete room booking workflow through natural dialogue — 24/7, no forms, no manual processing",
+        "Designed reversible PII tokenisation using Microsoft Presidio: customer personal data intercepted and tokenised before reaching the LLM, real values restored only at booking submission — no PII ever in LLM context",
+        "Implemented real-time availability querying, conflict detection, preference-based room matching, and booking confirmation via ClickUp integration",
+        "Orchestrated agent using MCP (Model Context Protocol) connecting Claude Sonnet 4 to live scheduling APIs; Qdrant for semantic venue search; Upstash Redis for session state and rate limiting",
+        "Authored 47-page technical specification covering architecture, security model, n8n workflow, AI system prompt, full message flow, data storage, implementation plan, and testing checklists"
+      ],
+      "tech_stack": ["n8n (self-hosted)", "Claude Sonnet 4", "Microsoft Presidio", "Qdrant", "Upstash Redis", "ClickUp API", "MCP", "Cloudflare Workers"],
+      "impact": "Replaced fully manual email-based process with 24/7 conversational AI — live in production at World Trade Center Karlskrona"
+    },
+
+    {
+      "id": "n8n-workflow-pipeline",
+      "title": "Agentic Workflow Automation Pipeline",
+      "client": "Internal",
+      "company": "Tech Concept Lab · Blue Science Park",
+      "status": "Production — live and operating",
+      "role": "Sole builder — designed, built, documented, deployed",
+      "tags": [
+        "agentic", "production", "n8n", "automation", "postgresql", "mcp",
+        "multi-role", "session-management", "llm-orchestration", "claude", "openai",
+        "webhook", "enterprise"
+      ],
+      "problem": "Multi-step internal business workflows required manual coordination across multiple team roles. No automation for routing, session management, or LLM-powered processing.",
+      "bullets": [
+        "Built production-grade conversational AI automation pipeline on n8n Cloud with multi-role routing — different workflow paths per user role",
+        "Implemented multi-turn session memory using PostgreSQL-backed conversation state across sessions",
+        "Integrated MCP protocol to connect LLM backend (Claude API / OpenAI GPT, configurable) to external enterprise tools and APIs",
+        "Built CORS-compliant server-side proxy layer, full error handling, retry logic, and documented failure modes",
+        "Wrote handoff playbook enabling teams to run and extend the system independently — zero ongoing support required post-deployment"
+      ],
+      "tech_stack": ["n8n Cloud", "Claude API", "OpenAI GPT", "PostgreSQL", "MCP", "Webhook architecture"],
+      "impact": "Teams run and extend independently post-handoff — zero ongoing support required"
+    },
+
+    {
+      "id": "dipt",
+      "title": "DIPT — AI Research Paper Monitoring System",
+      "client": "Prof. Tony Gorschek, BTH (SERL Sweden — ranked #1 EU for empirical SE research)",
+      "company": "Blekinge Institute of Technology",
+      "status": "Active development",
+      "role": "Co-engineer (with Rakesh Reddy Karri) — multi-agent system design and implementation",
+      "tags": [
+        "multi-agent", "langraph", "langchain", "rag", "research", "academic",
+        "llm-orchestration", "chromadb", "postgresql", "ollama", "local-llm",
+        "python", "streamlit", "nextjs", "pdf-processing", "classification",
+        "arxiv", "semantic-scholar", "data-pipeline"
+      ],
+      "problem": "SE research teams spend significant time manually discovering and curating relevant papers across dozens of journals. No automated system existed for continuous monitoring, scoring, and surfacing.",
+      "bullets": [
+        "Built fully automated, locally-run multi-agent AI system for continuous SE research paper discovery, scoring, and curation — running 70B parameter LLMs entirely on-device via Ollama",
+        "Designed multi-agent pipeline using LangGraph + LangChain: Fetch Agent (7 data sources), Parser Agent (PDF extraction via PyMuPDF), Categorisation Agent (47-category taxonomy), QA Agent (auto-resolve or escalate)",
+        "Implemented LLM quality gate using llama3.1:8b for strict YES/NO SE relevance check before any paper enters the database — prevents noise at source",
+        "Classified papers across 47 categories spanning SWEBOK v4's 18 knowledge areas + 29 emerging SE domains; 50/50 papers categorised with 0 failures in development runs",
+        "Hardware: HP Z2 Mini G1a with AMD Ryzen AI Max+ Pro 395, 96GB unified memory — fully local, no cloud LLM dependency"
+      ],
+      "tech_stack": ["LangGraph", "LangChain", "llama3.1:70b", "deepseek-r1:70b", "command-r-plus", "ChromaDB", "PostgreSQL", "PyMuPDF", "Streamlit", "Next.js", "Ollama", "Python 3.11"],
+      "impact": "732 papers fetched, 543 PDFs processed; 42-minute categorisation run for 50 papers with 0 failures"
+    },
+
+    {
+      "id": "neuramq",
+      "title": "NeuraMQ — AI-Powered Anomaly Detection System",
+      "client": "Appleton Innovations",
+      "company": "Appleton Innovations, Visakhapatnam",
+      "status": "Production — live and operating",
+      "role": "Sole AI/ML engineer — built end-to-end",
+      "tags": [
+        "ml", "anomaly-detection", "rag", "lstm", "autoencoder", "isolation-forest",
+        "tensorflow", "pytorch", "chromadb", "azure-openai", "fastapi", "docker",
+        "react", "postgresql", "mqtt", "real-time", "production", "internship",
+        "explainable-ai", "industrial", "time-series"
+      ],
+      "problem": "Industrial data streams monitored manually — incidents caught late, explanations absent, no automated alerting or explainability layer.",
+      "bullets": [
+        "Built full-stack production anomaly detection system combining LSTM (sequence anomaly), Autoencoders (reconstruction error), and Isolation Forest (statistical outliers) in an ensemble pipeline",
+        "Integrated RAG pipeline using ChromaDB vector search + Azure OpenAI + Cohere embeddings to generate context-aware, natural language anomaly reports — not just alerts",
+        "End-to-end data pipeline: MQTT → FastAPI → PostgreSQL → ML inference → ChromaDB RAG → explainable report → React dashboard (real-time visualisation)",
+        "Full model lifecycle: training (TensorFlow/PyTorch), experiment tracking, model versioning, Docker microservices deployment, post-deployment performance monitoring",
+        "Achieved 60% faster incident detection and 25% throughput improvement in production"
+      ],
+      "tech_stack": ["LSTM", "Autoencoders", "Isolation Forest", "TensorFlow", "PyTorch", "ChromaDB", "Azure OpenAI", "Cohere", "FastAPI", "PostgreSQL", "MQTT", "Docker", "React"],
+      "impact": "60% faster incident detection, 25% throughput improvement — deployed in production at Appleton Innovations"
+    },
+
+    {
+      "id": "thesis-mvg",
+      "title": "Minimum Viable Guardrail (MVG) — AI Safety Research",
+      "client": "Blekinge Institute of Technology",
+      "company": "BTH · Supervisor: Dr. Sadi Alawadi · Collaborator: Prof. Tony Gorschek",
+      "status": "Completed — submitted for grading",
+      "role": "Sole researcher — introduced original constructs, ran all empirical studies",
+      "tags": [
+        "research", "ai-safety", "guardrails", "llm", "mutation-testing", "msr",
+        "empirical", "academic", "python", "eu-ai-act", "responsible-ai",
+        "metrics", "evaluation", "agentic", "government", "healthcare", "banking",
+        "v-ratio", "verification"
+      ],
+      "problem": "No lightweight, quantitative framework existed to measure or constrain the verification bottleneck in AI-integrated software systems — especially critical for regulated industries.",
+      "bullets": [
+        "Introduced the V-Ratio (T_verify / T_generate) — original quantitative metric measuring verification-to-generation time ratio in AI workflows; empirical study across 372 PRs, 11 repos, 37 months yielded median V-Ratio of 166.4×",
+        "Demonstrated deterministic testing structural limitations via adversarial mutation: 717 mutations across 239 MBPP functions, 5 random seeds — Dead Failure Rate of 34.45% (std 0.00% across all seeds)",
+        "Built and evaluated Z-SAAP logic-based guardrail across 6 pipeline versions on a 956-case corpus; v6 achieved 49.91% Safety Score, 22.03% FPR, 62.03% accuracy, 1,258ms latency",
+        "Proposed Minimum Viable Guardrail (MVG): lightweight runtime safety envelope constraining probabilistic AI outputs within deterministic logical boundaries — applicable to any organisation scaling AI in production",
+        "Introduced original constructs: Verification Singularity, Verification Chasm, Epistemic Debt — with direct applicability to EU AI Act Articles 14/26 compliance"
+      ],
+      "tech_stack": ["Python", "MSR methodology", "Mutation testing framework", "Logic-based guardrail architecture", "Statistical analysis"],
+      "impact": "Original research applicable to responsible AI governance in banks, government agencies, and healthcare — directly maps to EU AI Act compliance"
+    },
+
+    {
+      "id": "visimies",
+      "title": "Visimies — Multimodal Conversational AI Agent",
+      "client": "Build Bharat Hackathon 2024",
+      "company": "Hackathon",
+      "status": "Completed — Top 15 nationally, 400+ teams",
+      "role": "Builder",
+      "tags": [
+        "multimodal", "conversational-ai", "voice", "audio", "hackathon",
+        "agentic", "real-time", "nlp"
+      ],
+      "problem": "Build a working multimodal conversational AI agent within hackathon timeframe.",
+      "bullets": [
+        "Built conversational AI agent with multimodal input understanding (text + audio) and real-time voice response generation",
+        "Ranked Top 15 nationally out of 400+ competing teams at Build Bharat Hackathon 2024 — National Finalist",
+        "Demonstrates ability to scope, build, and ship working AI systems under competitive time constraints"
+      ],
+      "tech_stack": ["Multimodal AI", "Voice processing", "Conversational agent architecture"],
+      "impact": "Top 15 nationally out of 400+ teams — National Finalist"
+    },
+
+    {
+      "id": "aws-serverless",
+      "title": "AWS Serverless Image Processing Pipeline",
+      "client": "Blekinge Institute of Technology",
+      "company": "BTH · Course DV1566",
+      "status": "Deployed — University course project",
+      "role": "Builder",
+      "tags": [
+        "aws", "serverless", "lambda", "s3", "cloudwatch", "iam", "python",
+        "event-driven", "auto-scaling", "cloud", "devops", "academic"
+      ],
+      "problem": "Design and deploy an event-driven, auto-scaling image processing pipeline on AWS.",
+      "bullets": [
+        "Built event-driven serverless image processing pipeline: S3 upload event → Lambda trigger → Pillow image processing → output S3 → CloudWatch logging",
+        "Demonstrated auto-scaling from 0 → 150 concurrent Lambda executions under load testing",
+        "Tuned memory allocation and timeout configuration based on CloudWatch performance data — eliminated bottlenecks",
+        "Configured AWS IAM roles, Lambda Layers for dependency management, and S3 event trigger architecture"
+      ],
+      "tech_stack": ["AWS Lambda", "AWS S3", "AWS CloudWatch", "AWS IAM", "Python 3.10", "Boto3", "Pillow", "Lambda Layers"],
+      "impact": "0 → 150 concurrent Lambda executions demonstrated under load testing"
+    }
+  ],
+
+  "design_projects": [
+    {
+      "id": "hindustan-shipyard",
+      "title": "Hindustan Shipyard Defence Website",
+      "client": "Hindustan Shipyard (Indian defence sector)",
+      "company": "Sweya Infotech",
+      "role": "UI/UX Designer",
+      "bullets": [
+        "Designed secure user authentication system and interfaces for Indian defence sector client",
+        "Implemented defence-sector compliance standards in UI/UX patterns",
+        "Security-aware interface design for high-stakes government context"
+      ]
+    },
+    {
+      "id": "clappit-ai",
+      "title": "Clappit AI Application Interface",
+      "client": "Clappit",
+      "company": "Sweya Infotech",
+      "role": "UI/UX Designer",
+      "bullets": [
+        "Designed full application interface for an AI-assisted productivity tool",
+        "Improved user engagement and feature discoverability through UX iteration"
+      ]
+    },
+    {
+      "id": "district-collector-dashboard",
+      "title": "District Collector's Administrative Dashboard",
+      "client": "Government",
+      "company": "Sweya Infotech",
+      "role": "UI/UX Designer",
+      "bullets": [
+        "Designed data visualisation components for government administrative workflows",
+        "Improved decision-making efficiency for district administration"
+      ]
+    },
+    {
+      "id": "ahub-brand",
+      "title": "āhub Brand Identity & Logo",
+      "company": "Freelance / Edumoon",
+      "role": "Brand Designer",
+      "bullets": [
+        "Created complete brand identity for āhub — logo design now in active use as primary brand"
+      ]
+    },
+    {
+      "id": "huebits-platform",
+      "title": "IIT Alumni Startup Educational Platform",
+      "company": "Huebits",
+      "role": "UI/UX Designer",
+      "bullets": [
+        "Complete interface design and implementation for educational content platform",
+        "Focus on educational content accessibility and learner experience"
+      ]
+    },
+    {
+      "id": "hult-prize",
+      "title": "Hult Prize International Campaign",
+      "company": "AUCE",
+      "role": "Graphic Design Lead",
+      "bullets": [
+        "Led complete brand campaign for Hult Prize (global social entrepreneurship competition initiated by President Bill Clinton)",
+        "Designed pitch presentations, social media content, and event collateral reaching 1,000+ students",
+        "Managed end-to-end creative production for campus-wide initiative"
+      ]
+    },
+    {
+      "id": "gdg-design",
+      "title": "GDG Design System",
+      "company": "Google Developer Student Club · AUCE",
+      "role": "Graphic Design Lead (Aug 2023 – Present)",
+      "bullets": [
+        "Created promotional materials and design systems for GDG technical workshops and hackathons",
+        "Aligned output with Google brand guidelines",
+        "Mentored team members on design best practices"
+      ]
+    },
+    {
+      "id": "freelance-design",
+      "title": "Freelance Graphic Design & UI/UX",
+      "company": "Fiverr, Upwork, Freelancer.com",
+      "role": "Freelance Designer",
+      "period": "May 2020 – Dec 2022",
+      "bullets": [
+        "50+ projects for clients across USA, UK, Canada, and Australia",
+        "Services: graphic design, UI/UX, logo creation, video editing",
+        "90%+ client satisfaction rate"
+      ]
+    }
+  ],
+
+  "experience": [
+    {
+      "id": "tech-concept-lab",
+      "role": "Agentic AI Systems Builder",
+      "company": "Tech Concept Lab · Blue Science Park",
+      "location": "Karlskrona, Sweden",
+      "period": "2024 – Present",
+      "tags": ["agentic", "production", "swedish", "government", "n8n", "claude", "gdpr"],
+      "bullets": [
+        "Forward-deployed AI engineer at Blue Science Park innovation ecosystem, Karlskrona",
+        "Built and delivered production agentic AI systems for Swedish government (Försäkringskassan) and private clients (Paraply/The Pot WTC)",
+        "Projects span: AI casework automation, conversational booking agents, enterprise workflow pipelines, and local multi-agent research systems",
+        "Full ownership across design, build, deployment, and documentation for each system"
+      ]
+    },
+    {
+      "id": "appleton-internship",
+      "role": "ML Engineering Intern",
+      "company": "Appleton Innovations",
+      "location": "Visakhapatnam, India",
+      "period": "Jun 2025 – Aug 2025",
+      "tags": ["ml", "anomaly-detection", "production", "internship", "tensorflow", "pytorch"],
+      "bullets": [
+        "Sole AI/ML engineer — built NeuraMQ anomaly detection system end-to-end",
+        "Deployed production system achieving 60% faster incident detection and 25% throughput improvement",
+        "Built full pipeline from MQTT ingestion through ML inference to React dashboard"
+      ]
+    },
+    {
+      "id": "sweya-infotech",
+      "role": "UI/UX Designer",
+      "company": "Sweya Infotech",
+      "location": "India",
+      "period": "Prior",
+      "tags": ["ui-ux", "design", "government", "defence", "ai-product"],
+      "bullets": [
+        "Designed interfaces for clients including Hindustan Shipyard (Indian defence sector), Clappit AI, and a District Collector's administrative dashboard",
+        "Delivered security-aware, compliance-informed UI/UX for high-stakes government and defence contexts"
+      ]
+    },
+    {
+      "id": "freelance-design-exp",
+      "role": "Freelance Graphic Designer & UI/UX",
+      "company": "Independent",
+      "location": "Remote",
+      "period": "May 2020 – Dec 2022",
+      "tags": ["design", "freelance", "international", "ui-ux"],
+      "bullets": [
+        "50+ projects for clients across USA, UK, Canada, and Australia via Fiverr, Upwork, and Freelancer.com",
+        "90%+ client satisfaction rate across graphic design, UI/UX, logo creation, and video editing"
+      ]
+    }
+  ],
+
+  "education": {
+    "degree": "B.Sc. Computer Science — AI/ML Specialization",
+    "institution": "Blekinge Institute of Technology (BTH)",
+    "location": "Karlskrona, Sweden",
+    "supervisor": "Dr. Sadi Alawadi",
+    "research_collaborator": "Prof. Tony Gorschek (SERL Sweden — ranked #1 EU for empirical SE research)",
+    "expected": "2025",
+    "thesis": "Toward a Verification Singularity: Minimum Viable Guardrail for AI-Integrated Software Systems",
+    "course": "DV1478"
+  },
+
+  "achievements": [
+    "Top 15 nationally at Build Bharat Hackathon 2024 — National Finalist (400+ teams)",
+    "Production AI system approved and advancing to deployment at Försäkringskassan (Swedish government agency)",
+    "Live booking agent at World Trade Center Karlskrona — replaced 100% manual process",
+    "Research collaborator with Prof. Tony Gorschek (BTH — #1 EU empirical SE research group)",
+    "50+ freelance design projects with 90%+ client satisfaction across USA, UK, Canada, Australia"
+  ],
+
+  "languages": [
+    { "language": "English", "level": "Fluent" },
+    { "language": "Swedish", "level": "Learning (active immersion)" },
+    { "language": "Telugu", "level": "Native" },
+    { "language": "Hindi", "level": "Fluent" }
+  ],
+
+  "_meta": {
+    "last_updated": "June 2026",
+    "version": "1.0",
+    "tailor_agent_note": "When selecting projects for a JD, prefer production projects over academic unless the role is research-focused. Always lead with forsakringskassan or paraply-booking for Swedish/government/enterprise roles. Lead with neuramq for ML engineering or data science roles. Lead with dipt for research, LangGraph, or local LLM roles. Include thesis-mvg for AI safety, compliance, or regulated industry roles. aws-serverless is a supporting project — include if cloud/serverless skills are required. Design projects are only relevant for product/design-adjacent roles."
+  }
+}

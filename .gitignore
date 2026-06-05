@@ -1,0 +1,6 @@
+node_modules/
+dist/
+.env
+data/applications.db
+output/*.docx
+output/*.pdf
