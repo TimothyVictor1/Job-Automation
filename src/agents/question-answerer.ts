@@ -1,10 +1,8 @@
-import Anthropic from '@anthropic-ai/sdk';
-import * as dotenv from 'dotenv';
 import { Page } from 'playwright';
+import { getClient, CLAUDE_MODEL } from '../utils/anthropic';
 import { TailoredResume } from './resume-tailor';
 import { ParsedJD } from './jd-parser';
 import { humanDelay } from '../utils/browser';
-dotenv.config();
 
 export interface QA {
   question: string;
@@ -19,7 +17,7 @@ export async function answerQuestions(
 ): Promise<QA[]> {
   if (questions.length === 0) return [];
 
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const client = getClient();
 
   const selectedTitles = tailored.selectedProjectIds
     .map(id => profile.projects?.find((p: any) => p.id === id))
@@ -44,7 +42,7 @@ Return JSON array only:
 ]`;
 
   const response = await client.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: CLAUDE_MODEL,
     max_tokens: 2048,
     messages: [{ role: 'user', content: prompt }],
   });

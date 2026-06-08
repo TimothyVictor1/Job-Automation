@@ -57,6 +57,11 @@ LI_EMAIL=your@email.com               # optional — only needed for LinkedIn
 LI_PASSWORD=yourpassword              # optional — only needed for LinkedIn
 ```
 
+> ⚠️ **Edit `.env` with a plain-text editor** — use `nano .env` or VS Code.
+> **Do not use TextEdit.** TextEdit can insert curly quotes and hidden formatting
+> that corrupt the key and cause `invalid x-api-key` errors. The key must start
+> with `sk-ant-`, sit on one line, with no quotes and no trailing spaces.
+
 That's it. You're ready to run.
 
 ---
@@ -263,6 +268,48 @@ Two files drive all content decisions:
 **`profile/projects.md`** — rich narrative detail about each project. Claude reads both files together; the markdown gives it more context to write better bullets and cover letters. Keep it updated as projects evolve.
 
 The `_meta.tailor_agent_note` field at the bottom of `timothy.json` tells Claude which projects to prioritise for which types of roles. Edit it if your priorities change.
+
+---
+
+## Troubleshooting
+
+### `sh: ts-node: command not found`
+
+Dependencies didn't fully install. Run `npm install` again from the project root,
+then `npm run apply`. (`ts-node` and `typescript` are dev dependencies and install
+automatically with `npm install`.)
+
+### `invalid x-api-key` / 401 authentication error
+
+Anthropic received a key but rejected it. The key in `.env` is wrong, incomplete,
+or has hidden characters. Fix it:
+
+1. Copy your **full** key from https://console.anthropic.com/settings/keys — it
+   starts with `sk-ant-` and is ~100 characters. Make sure you copy all of it.
+2. Edit `.env` with a plain-text editor — **not TextEdit**:
+   ```bash
+   nano .env          # or open the folder in VS Code
+   ```
+3. The line must read exactly (one line, no quotes, no spaces):
+   ```env
+   ANTHROPIC_API_KEY=sk-ant-...
+   ```
+4. Confirm your Anthropic account has **billing/credits enabled** — a key with no
+   credits is rejected.
+5. Save and run `npm run apply` again.
+
+The agent now validates the key at startup and prints these steps if anything's
+wrong, so you'll know immediately rather than mid-run.
+
+### `Could not resolve authentication method`
+
+There's no `.env` file yet. Run `cp .env.example .env`, then add your key as above.
+
+### The browser download fails / `npx playwright install chromium` errors
+
+You need network access to download the browser (~130 MB). On a restricted network
+it may be blocked. Run the command again on a normal connection. This is only
+needed once.
 
 ---
 

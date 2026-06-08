@@ -1,6 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk';
-import * as dotenv from 'dotenv';
-dotenv.config();
+import { getClient, CLAUDE_MODEL } from '../utils/anthropic';
 
 export interface ParsedJD {
   company: string;
@@ -19,7 +17,7 @@ export interface ParsedJD {
 }
 
 export async function parseJD(pageText: string): Promise<ParsedJD> {
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const client = getClient();
 
   const prompt = `You are parsing a job description for Timothy Victor Rachuri's job application system.
 
@@ -46,7 +44,7 @@ JOB PAGE TEXT:
 ${pageText}`;
 
   const response = await client.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: CLAUDE_MODEL,
     max_tokens: 2048,
     messages: [{ role: 'user', content: prompt }],
   });

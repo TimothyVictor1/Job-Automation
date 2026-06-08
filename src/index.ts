@@ -21,6 +21,7 @@ import { loadProfile } from './utils/profile-loader';
 import { openFile } from './utils/open-file';
 import { logApplication } from './db/tracker';
 import { waitForKeypress } from './utils/browser';
+import { assertApiKey, formatApiError } from './utils/anthropic';
 
 function ask(question: string): Promise<string> {
   return new Promise(resolve => {
@@ -34,6 +35,15 @@ function ask(question: string): Promise<string> {
 
 async function main() {
   console.log(chalk.bold.cyan('\n🤖 Job Application Agent — Timothy Victor Rachuri\n'));
+
+  // Preflight: validate the API key BEFORE doing any work, so failures are
+  // instant and explain exactly how to fix the .env file.
+  try {
+    assertApiKey();
+  } catch (err: any) {
+    console.error(chalk.red('\n❌ ' + err.message + '\n'));
+    process.exit(1);
+  }
 
   // Step 1: Get job URL or paste JD
   const urlInput = await ask(chalk.yellow('📎 Enter job URL (or press ENTER to paste JD manually): '));
@@ -197,6 +207,6 @@ async function main() {
 }
 
 main().catch(err => {
-  console.error(chalk.red(`Fatal error: ${err}`));
+  console.error(chalk.red('\n❌ ' + formatApiError(err) + '\n'));
   process.exit(1);
 });

@@ -1,7 +1,5 @@
-import Anthropic from '@anthropic-ai/sdk';
-import * as dotenv from 'dotenv';
+import { getClient, CLAUDE_MODEL } from '../utils/anthropic';
 import { ParsedJD } from './jd-parser';
-dotenv.config();
 
 export interface TailoredResume {
   fitScore: number;
@@ -20,9 +18,7 @@ export async function tailorResume(
   projectsMd: string,
   parsedJD: ParsedJD
 ): Promise<TailoredResume> {
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
-  const profileContext = `PROFILE JSON:\n${JSON.stringify(profile, null, 2)}\n\nPROJECT DETAILS:\n${projectsMd}`;
+  const client = getClient();
 
   const prompt = `You are a senior tech recruiter helping Timothy Victor Rachuri tailor his resume for a specific job. Your job is to select the best projects and rewrite bullet points to mirror the exact language of the job description.
 
@@ -66,7 +62,7 @@ Return ONLY valid JSON, no markdown:
 }`;
 
   const response = await client.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: CLAUDE_MODEL,
     max_tokens: 4096,
     messages: [{ role: 'user', content: prompt }],
   });

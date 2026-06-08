@@ -1,15 +1,13 @@
-import Anthropic from '@anthropic-ai/sdk';
-import * as dotenv from 'dotenv';
+import { getClient, CLAUDE_MODEL } from '../utils/anthropic';
 import { ParsedJD } from './jd-parser';
 import { TailoredResume } from './resume-tailor';
-dotenv.config();
 
 export async function generateCoverLetterText(
   profile: any,
   parsedJD: ParsedJD,
   tailored: TailoredResume
 ): Promise<string> {
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const client = getClient();
 
   const selectedProjects = tailored.selectedProjectIds
     .map(id => profile.projects?.find((p: any) => p.id === id))
@@ -50,7 +48,7 @@ INSTRUCTIONS:
 Return the plain cover letter text only — no JSON, no formatting markers.`;
 
   const response = await client.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: CLAUDE_MODEL,
     max_tokens: 2048,
     messages: [{ role: 'user', content: prompt }],
   });
