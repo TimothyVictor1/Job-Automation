@@ -6,7 +6,9 @@ import * as path from 'path';
 dotenv.config({ path: path.join(process.cwd(), '.env') });
 
 // Model pinned by the project spec. Change here once to update everywhere.
-export const CLAUDE_MODEL = 'claude-sonnet-4-20250514';
+// claude-sonnet-4-20250514 is deprecated (retiring June 15, 2026) and already
+// 404s for some accounts — claude-sonnet-4-6 is its direct replacement.
+export const CLAUDE_MODEL = 'claude-sonnet-4-6';
 
 /**
  * Clean a pasted key: strip surrounding whitespace and any wrapping quotes
