@@ -7,9 +7,10 @@ import { chromium } from 'playwright';
 
 import { fetchJobPage, readJdFromStdin } from './agents/jd-fetcher';
 import { parseJD } from './agents/jd-parser';
+import { preScreen } from './agents/pre-screener';
 import { tailorResume } from './agents/resume-tailor';
 import { generateCoverLetterText } from './agents/cover-letter';
-import { generateResumeDOCX } from './resume/generator';
+import { generateAtsResumeDOCX, generateVisualResumeDOCX } from './resume/generator';
 import { generateCoverLetterDOCX } from './coverletter/generator';
 import { detectPortal } from './portals/detector';
 import { fillTeamtailor } from './portals/teamtailor';
@@ -33,11 +34,29 @@ function ask(question: string): Promise<string> {
   });
 }
 
+function printPreScreenReport(screen: ReturnType<typeof preScreen>): void {
+  const scoreColor = screen.fitScore >= 7 ? chalk.green : screen.fitScore >= 5 ? chalk.yellow : chalk.red;
+  const recIcon = screen.recommendation === 'apply' ? '✅' : screen.recommendation === 'review-gaps' ? '⚠️ ' : '🚫';
+
+  console.log(chalk.bold('\n── Pre-Screen Report ──────────────────────────────'));
+  console.log(`  Fit score:    ${scoreColor(screen.fitScore + '/10')}`);
+  console.log(`  Keyword coverage: ${Math.round(screen.keywordCoverage * 100)}%  |  Must-have coverage: ${Math.round(screen.mustHaveCoverage * 100)}%`);
+  console.log(`  Recommendation: ${recIcon} ${screen.recommendation.toUpperCase()}`);
+
+  if (screen.matchedSkills.length > 0) {
+    console.log(chalk.green(`\n  Matched skills (${screen.matchedSkills.length}): ${screen.matchedSkills.slice(0, 8).join(', ')}${screen.matchedSkills.length > 8 ? '...' : ''}`));
+  }
+
+  if (screen.gapSummary) {
+    console.log(chalk.yellow('\n' + screen.gapSummary.split('\n').map(l => '  ' + l).join('\n')));
+  }
+
+  console.log(chalk.gray('────────────────────────────────────────────────────\n'));
+}
+
 async function main() {
   console.log(chalk.bold.cyan('\n🤖 Job Application Agent — Timothy Victor Rachuri\n'));
 
-  // Preflight: validate the API key BEFORE doing any work, so failures are
-  // instant and explain exactly how to fix the .env file.
   try {
     assertApiKey();
   } catch (err: any) {
@@ -68,55 +87,103 @@ async function main() {
   console.log(chalk.gray('  Parsing job description...'));
   const parsedJD = await parseJD(jobText);
   console.log(chalk.green(`✅ Parsed: ${parsedJD.role} @ ${parsedJD.company} | ${parsedJD.location}`));
-  console.log(chalk.gray(`   Tech: ${parsedJD.techStack.slice(0, 5).join(', ')}`));
 
   // Step 3: Load profile
   const { profile, projectsMd } = loadProfile();
 
-  // Step 4: Tailor resume
-  console.log(chalk.gray('  Tailoring resume...'));
-  const tailored = await tailorResume(profile, projectsMd, parsedJD);
-  console.log(chalk.green(`✅ Fit score: ${tailored.fitScore}/10 — ${tailored.fitReason}`));
-  console.log(chalk.gray(`   Projects selected: ${tailored.selectedProjectIds.join(', ')}`));
-  console.log(chalk.gray(`   Notes: ${tailored.tailoringNotes}`));
+  // Step 4: Pre-screening
+  console.log(chalk.gray('  Running pre-screen...'));
+  const screen = preScreen(parsedJD, profile);
+  printPreScreenReport(screen);
 
-  if (tailored.fitScore < 5) {
-    const proceed = await ask(chalk.yellow('⚠️  Low fit score. Apply anyway? (y/n): '));
+  if (screen.recommendation === 'skip') {
+    const force = await ask(chalk.red('🚫 Low fit or hard blockers detected. Apply anyway? (y/n): '));
+    if (force.toLowerCase() !== 'y') {
+      console.log(chalk.gray('Exiting.'));
+      process.exit(0);
+    }
+  } else if (screen.recommendation === 'review-gaps') {
+    const proceed = await ask(chalk.yellow('⚠️  Gaps detected above. Continue to tailoring? (y/n): '));
     if (proceed.toLowerCase() !== 'y') {
       console.log(chalk.gray('Exiting.'));
       process.exit(0);
     }
   }
 
-  // Step 5: Generate docs
-  let resumePath = '';
+  // Step 5: Tailor resume
+  console.log(chalk.gray('  Tailoring resume (grounded to profile)...'));
+  const tailored = await tailorResume(profile, projectsMd, parsedJD);
+  console.log(chalk.green(`✅ Fit score: ${tailored.fitScore}/10 — ${tailored.fitReason}`));
+  console.log(chalk.gray(`   Projects: ${tailored.selectedProjectIds.join(', ')}`));
+  if (tailored.tailoringNotes) {
+    console.log(chalk.gray(`   Notes: ${tailored.tailoringNotes}`));
+  }
+
+  if (tailored.fitScore < 5) {
+    const proceed = await ask(chalk.yellow('⚠️  Low tailor score. Apply anyway? (y/n): '));
+    if (proceed.toLowerCase() !== 'y') {
+      process.exit(0);
+    }
+  }
+
+  // Step 6: Generate documents
+  let atsResumePath = '';
+  let visualResumePath = '';
   let coverLetterPath = '';
   let coverLetterText = '';
 
   const genDocs = await ask(chalk.yellow('\n📝 Generate resume + cover letter? (y/n): '));
   if (genDocs.toLowerCase() === 'y') {
-    console.log(chalk.gray('  Generating cover letter text...'));
+    // Choose resume format
+    console.log(chalk.cyan('\n  Resume formats:'));
+    console.log(chalk.gray('  1 = ATS only    (single-column DOCX — safe for Greenhouse/Lever/Workday)'));
+    console.log(chalk.gray('  2 = Visual only  (two-column DOCX  — best for Teamtailor/human review)'));
+    console.log(chalk.gray('  3 = Both         (recommended)'));
+    const formatChoice = await ask(chalk.yellow('  Format choice (1/2/3): '));
+
+    // Photo option for visual
+    let photoPath: string | undefined;
+    if (formatChoice === '2' || formatChoice === '3') {
+      const wantPhoto = await ask(chalk.yellow('  Add photo column to visual resume? (y/n): '));
+      if (wantPhoto.toLowerCase() === 'y') {
+        const p = await ask(chalk.yellow('  Path to photo file (JPG/PNG): '));
+        if (p) photoPath = p;
+      }
+    }
+
+    console.log(chalk.gray('  Generating cover letter...'));
     coverLetterText = await generateCoverLetterText(profile, parsedJD, tailored);
 
-    console.log(chalk.gray('  Generating DOCX resume...'));
-    resumePath = await generateResumeDOCX(profile, tailored, parsedJD, coverLetterText);
-    console.log(chalk.green(`  ✅ Resume:      ${resumePath}`));
+    if (formatChoice === '1' || formatChoice === '3') {
+      console.log(chalk.gray('  Generating ATS resume...'));
+      atsResumePath = await generateAtsResumeDOCX(profile, tailored, parsedJD);
+      console.log(chalk.green(`  ✅ ATS resume:     ${atsResumePath}`));
+    }
 
-    console.log(chalk.gray('  Generating DOCX cover letter...'));
+    if (formatChoice === '2' || formatChoice === '3') {
+      console.log(chalk.gray('  Generating visual resume...'));
+      visualResumePath = await generateVisualResumeDOCX(profile, tailored, parsedJD, photoPath);
+      console.log(chalk.green(`  ✅ Visual resume:  ${visualResumePath}`));
+    }
+
+    console.log(chalk.gray('  Generating cover letter DOCX...'));
     coverLetterPath = await generateCoverLetterDOCX(profile, parsedJD, coverLetterText);
-    console.log(chalk.green(`  ✅ Cover letter: ${coverLetterPath}`));
+    console.log(chalk.green(`  ✅ Cover letter:   ${coverLetterPath}`));
 
     const openFiles = await ask(chalk.yellow('📂 Open files to review now? (y/n): '));
     if (openFiles.toLowerCase() === 'y') {
-      await openFile(resumePath);
+      if (atsResumePath) await openFile(atsResumePath);
+      if (visualResumePath) await openFile(visualResumePath);
       await openFile(coverLetterPath);
     }
 
     await waitForKeypress(chalk.yellow('\nPress ENTER when you\'ve reviewed the documents...'));
   }
 
-  // Step 6: Browser automation
+  // Step 7: Browser automation
   const openBrowser = await ask(chalk.yellow('\n🌐 Open application form in browser? (y/n): '));
+  const resumeForUpload = visualResumePath || atsResumePath;
+
   if (openBrowser.toLowerCase() !== 'y') {
     logApplication({
       job_url: jobUrl,
@@ -124,7 +191,7 @@ async function main() {
       role: parsedJD.role,
       fit_score: tailored.fitScore,
       fit_reason: tailored.fitReason,
-      resume_path: resumePath,
+      resume_path: resumeForUpload,
       cover_letter_path: coverLetterPath,
       status: 'prepared',
     });
@@ -142,7 +209,11 @@ async function main() {
     await tempBrowser.close();
     console.log(chalk.cyan(`🌐 Portal: ${portalType}`));
 
-    // Launch visible browser
+    // For human-reviewed portals (Teamtailor), prefer the visual resume
+    const uploadResume = (portalType === 'teamtailor' && visualResumePath)
+      ? visualResumePath
+      : resumeForUpload;
+
     const browser = await chromium.launch({ headless: false, slowMo: 50 });
     const context = await browser.newContext({
       userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -152,30 +223,29 @@ async function main() {
     await page.goto(jobUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
     await page.waitForTimeout(2000);
 
-    // Run portal handler
     try {
       switch (portalType) {
         case 'teamtailor':
-          await fillTeamtailor(page, profile, parsedJD, tailored, resumePath, coverLetterText);
+          await fillTeamtailor(page, profile, parsedJD, tailored, uploadResume, coverLetterText);
           break;
         case 'linkedin':
-          await fillLinkedIn(page, profile, parsedJD, tailored, resumePath, coverLetterText);
+          await fillLinkedIn(page, profile, parsedJD, tailored, uploadResume, coverLetterText);
           break;
         case 'greenhouse':
-          await fillGreenhouse(page, profile, parsedJD, tailored, resumePath, coverLetterText);
+          await fillGreenhouse(page, profile, parsedJD, tailored, uploadResume, coverLetterText);
           break;
         case 'lever':
-          await fillLever(page, profile, parsedJD, tailored, resumePath, coverLetterText);
+          await fillLever(page, profile, parsedJD, tailored, uploadResume, coverLetterText);
           break;
         default:
-          await fillGeneric(page, profile, parsedJD, tailored, resumePath, coverLetterText);
+          await fillGeneric(page, profile, parsedJD, tailored, uploadResume, coverLetterText);
       }
     } catch (err) {
       console.warn(chalk.yellow(`  ⚠  Portal handler error: ${err}`));
     }
 
-    console.log(chalk.bold.yellow('\n⏸️  PAUSED — The form is filled. Review everything in the browser.'));
-    console.log(chalk.gray('   ✓ Submit manually when ready. Press ENTER here to log the application.'));
+    console.log(chalk.bold.yellow('\n⏸️  PAUSED — Form filled. Review everything in the browser.'));
+    console.log(chalk.gray('   Submit manually when ready. Press ENTER here to log.'));
     await waitForKeypress('');
 
     const submitted = await ask(chalk.yellow('Did you submit the application? (y/n): '));
@@ -188,7 +258,7 @@ async function main() {
       portal_type: portalType,
       fit_score: tailored.fitScore,
       fit_reason: tailored.fitReason,
-      resume_path: resumePath,
+      resume_path: resumeForUpload,
       cover_letter_path: coverLetterPath,
       status,
     });

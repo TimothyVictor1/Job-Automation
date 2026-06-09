@@ -20,7 +20,10 @@ export async function tailorResume(
 ): Promise<TailoredResume> {
   const client = getClient();
 
-  const prompt = `You are a senior tech recruiter helping Timothy Victor Rachuri tailor his resume for a specific job. Your job is to select the best projects and rewrite bullet points to mirror the exact language of the job description.
+  const prompt = `You are helping Timothy Victor Rachuri tailor his resume for a specific job.
+
+CRITICAL GROUNDING RULE — READ THIS FIRST:
+Every noun you write (tool name, technology, metric, client name, company name, project name, framework, achievement) MUST exist verbatim in Timothy's PROFILE DATA below. You are selecting and reframing real facts — you are NEVER inventing new claims. If a JD keyword has no matching fact in the profile, do NOT add it. Highlight the closest real match instead. Your output will be verified against the source profile — any fabricated noun will be rejected.
 
 TIMOTHY'S FULL PROFILE (JSON):
 ${JSON.stringify(profile, null, 2)}
@@ -35,30 +38,34 @@ TAILOR AGENT NOTE from profile:
 ${profile._meta?.tailor_agent_note || ''}
 
 Instructions:
-1. Select 3-4 projects from the JSON profile that best match this specific JD
-2. Rewrite bullet points for selected projects to mirror JD language exactly
-   — use the same verbs, same tech terms, same framing as the JD
-   — pull richer detail from projects.md if it adds relevance
+1. Select 3-4 projects from the JSON profile that best match this specific JD (use the tailor_agent_note guidance above)
+2. Rewrite bullet points for selected projects to EMPHASISE the facts most relevant to this JD
+   — You may restructure sentences and adjust verb choice for relevance
+   — NEVER add a tool, technology, metric, client, or result that is not in the source profile data
+   — If a bullet from the source already says what needs to be said, keep it close to the original wording
+   — Pull richer detail from the projects markdown ONLY if that detail is documented there
 3. Write a tailored professional summary (3 sentences max) that speaks directly to this company's needs
-4. Select the top 8-10 skills most relevant to this JD from Timothy's full skill set
-5. Score the overall fit
+   — Mention only real technologies and projects from the profile
+   — Do not claim skills or experience not present in the profile
+4. Select the top 8-10 skills MOST relevant to this JD from Timothy's actual skills list (profile.skills only — do not add skills not listed there)
+5. Score the fit honestly — a 7+ means strong genuine match, not inflated
 
 Return ONLY valid JSON, no markdown:
 {
   "fitScore": 8,
-  "fitReason": "why this is a strong/weak match",
+  "fitReason": "why this is a strong/weak match, grounded in profile facts",
   "shouldApply": true,
-  "tailoredSummary": "3 sentence summary tailored to this specific company and role",
+  "tailoredSummary": "3 sentence summary tailored to this company — only facts from profile",
   "selectedProjectIds": ["id1", "id2", "id3"],
   "projectOrder": ["id2", "id1", "id3"],
   "rewrittenBullets": {
     "project_id": [
-      "rewritten bullet 1 mirroring JD language",
-      "rewritten bullet 2"
+      "rewritten bullet emphasising JD-relevant fact from profile",
+      "another bullet — only real facts"
     ]
   },
   "highlightedSkills": ["skill1", "skill2"],
-  "tailoringNotes": "brief notes on what was emphasised and why"
+  "tailoringNotes": "what was emphasised and why, and any gaps noted"
 }`;
 
   const response = await client.messages.create({
