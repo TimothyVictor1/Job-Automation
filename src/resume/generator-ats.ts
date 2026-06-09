@@ -8,7 +8,7 @@ import {
 } from 'docx';
 import * as fs from 'fs';
 import * as path from 'path';
-import { TailoredResume } from '../agents/resume-tailor';
+import { TailoredResume, deAiText } from '../agents/resume-tailor';
 import { ParsedJD } from '../agents/jd-parser';
 
 function sanitizeFilename(str: string): string {
@@ -34,7 +34,7 @@ function sectionHeader(text: string): Paragraph[] {
 
 function bullet(text: string): Paragraph {
   return new Paragraph({
-    children: [new TextRun({ text, size: 20, font: 'Calibri' })],
+    children: [new TextRun({ text: deAiText(text), size: 20, font: 'Calibri' })],
     bullet: { level: 0 },
     spacing: { after: 50 },
   });
@@ -42,7 +42,7 @@ function bullet(text: string): Paragraph {
 
 function body(text: string, bold = false, italic = false, color = '111111'): Paragraph {
   return new Paragraph({
-    children: [new TextRun({ text, bold, italics: italic, size: 20, font: 'Calibri', color })],
+    children: [new TextRun({ text: deAiText(text), bold, italics: italic, size: 20, font: 'Calibri', color })],
     spacing: { after: 50 },
   });
 }
@@ -89,6 +89,25 @@ export async function generateAtsResumeDOCX(
   children.push(...sectionHeader('Core Skills'));
   children.push(body(tailored.highlightedSkills.join(' · ')));
 
+  // Professional Experience — comes before projects (standard resume order)
+  children.push(...sectionHeader('Experience'));
+
+  for (const exp of profile.experience || []) {
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({ text: exp.role, bold: true, size: 22, font: 'Calibri' }),
+          new TextRun({ text: `  |  ${exp.company}`, size: 20, font: 'Calibri', color: '555555' }),
+        ],
+        spacing: { before: 100, after: 30 },
+      })
+    );
+    children.push(body(`${exp.location || ''}  ·  ${exp.period || ''}`, false, true, '777777'));
+    for (const b of exp.bullets || []) {
+      children.push(bullet(b));
+    }
+  }
+
   // Selected Projects
   children.push(...sectionHeader('Selected Projects'));
 
@@ -126,25 +145,6 @@ export async function generateAtsResumeDOCX(
           spacing: { after: 80 },
         })
       );
-    }
-  }
-
-  // Professional Experience
-  children.push(...sectionHeader('Professional Experience'));
-
-  for (const exp of profile.experience || []) {
-    children.push(
-      new Paragraph({
-        children: [
-          new TextRun({ text: exp.role, bold: true, size: 22, font: 'Calibri' }),
-          new TextRun({ text: `  |  ${exp.company}`, size: 20, font: 'Calibri', color: '555555' }),
-        ],
-        spacing: { before: 100, after: 30 },
-      })
-    );
-    children.push(body(`${exp.location || ''}  ·  ${exp.period || ''}`, false, true, '777777'));
-    for (const b of exp.bullets || []) {
-      children.push(bullet(b));
     }
   }
 

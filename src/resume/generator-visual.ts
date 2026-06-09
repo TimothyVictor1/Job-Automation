@@ -15,7 +15,7 @@ import {
 } from 'docx';
 import * as fs from 'fs';
 import * as path from 'path';
-import { TailoredResume } from '../agents/resume-tailor';
+import { TailoredResume, deAiText } from '../agents/resume-tailor';
 import { ParsedJD } from '../agents/jd-parser';
 
 // Accent color palette
@@ -53,21 +53,21 @@ function rightSectionHeader(text: string): Paragraph {
 
 function leftBody(text: string, bold = false, italic = false, size = 18): Paragraph {
   return new Paragraph({
-    children: [new TextRun({ text, bold, italics: italic, size, font: 'Calibri', color: COLOR.textMid })],
+    children: [new TextRun({ text: deAiText(text), bold, italics: italic, size, font: 'Calibri', color: COLOR.textMid })],
     spacing: { after: 40 },
   });
 }
 
 function rightBody(text: string, bold = false, italic = false, color = COLOR.textDark, size = 19): Paragraph {
   return new Paragraph({
-    children: [new TextRun({ text, bold, italics: italic, size, font: 'Calibri', color })],
+    children: [new TextRun({ text: deAiText(text), bold, italics: italic, size, font: 'Calibri', color })],
     spacing: { after: 50 },
   });
 }
 
 function rightBullet(text: string): Paragraph {
   return new Paragraph({
-    children: [new TextRun({ text: `•  ${text}`, size: 19, font: 'Calibri', color: COLOR.textDark })],
+    children: [new TextRun({ text: `•  ${deAiText(text)}`, size: 19, font: 'Calibri', color: COLOR.textDark })],
     spacing: { after: 50 },
     indent: { left: 200 },
   });
@@ -198,6 +198,25 @@ function buildRightColumn(profile: any, tailored: TailoredResume): Paragraph[] {
     })
   );
 
+  // Professional Experience — comes before projects (standard resume order)
+  paras.push(rightSectionHeader('Experience'));
+
+  for (const exp of profile.experience || []) {
+    paras.push(
+      new Paragraph({
+        children: [
+          new TextRun({ text: exp.role, bold: true, size: 21, font: 'Calibri', color: COLOR.textDark }),
+          new TextRun({ text: `  ·  ${exp.company}`, size: 19, font: 'Calibri', color: COLOR.textLight }),
+        ],
+        spacing: { before: 100, after: 30 },
+      })
+    );
+    paras.push(rightBody(`${exp.location || ''}  ·  ${exp.period || ''}`, false, true, COLOR.textLight, 17));
+    for (const b of exp.bullets || []) {
+      paras.push(rightBullet(b));
+    }
+  }
+
   // Selected Projects
   paras.push(rightSectionHeader('Selected Projects'));
 
@@ -235,25 +254,6 @@ function buildRightColumn(profile: any, tailored: TailoredResume): Paragraph[] {
           spacing: { after: 80 },
         })
       );
-    }
-  }
-
-  // Professional Experience
-  paras.push(rightSectionHeader('Professional Experience'));
-
-  for (const exp of profile.experience || []) {
-    paras.push(
-      new Paragraph({
-        children: [
-          new TextRun({ text: exp.role, bold: true, size: 21, font: 'Calibri', color: COLOR.textDark }),
-          new TextRun({ text: `  ·  ${exp.company}`, size: 19, font: 'Calibri', color: COLOR.textLight }),
-        ],
-        spacing: { before: 100, after: 30 },
-      })
-    );
-    paras.push(rightBody(`${exp.location || ''}  ·  ${exp.period || ''}`, false, true, COLOR.textLight, 17));
-    for (const b of exp.bullets || []) {
-      paras.push(rightBullet(b));
     }
   }
 
