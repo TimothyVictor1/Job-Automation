@@ -18,309 +18,341 @@ import * as path from 'path';
 import { TailoredResume, deAiText } from '../agents/resume-tailor';
 import { ParsedJD } from '../agents/jd-parser';
 
-// Accent color palette
-const COLOR = {
-  accent: '1B3F6A',      // dark navy
-  accentLight: '2E6DA4', // medium blue
-  leftBg: 'EEF2F7',      // very light blue-gray
-  textDark: '1C2833',    // near-black
-  textMid: '4A5568',     // medium gray
-  textLight: '718096',   // light gray
-  divider: 'CBD5E0',     // border gray
-  white: 'FFFFFF',
+// ── Layout constants ─────────────────────────────────────────────────────────
+// A4: 11906 × 16838 twips. Margins 500 twips (≈0.88 cm) each side.
+const MARGIN   = 500;
+const PAGE_W   = 11906;
+const AVAIL_W  = PAGE_W - MARGIN * 2;  // 10906
+const LEFT_W   = 3680;                 // ~34%  (≈6.5 cm — enough for skills)
+const RIGHT_W  = AVAIL_W - LEFT_W;    // 7226
+
+// ── Colour palette ───────────────────────────────────────────────────────────
+const C = {
+  // Dark navy sidebar
+  sidebar:   '1B3F6A',
+  sideName:  'FFFFFF',
+  sideAccent:'7EB3D8',   // light blue — section headers in sidebar
+  sideHr:    '2E6096',   // divider inside sidebar
+  sideBody:  'C8D8E8',   // regular text in sidebar
+  sideSmall: '8AAABF',   // italic/secondary text in sidebar
+
+  // White right column
+  rAccent:   '1B3F6A',   // dark navy — headings
+  rBar:      '2E6096',   // left-bar on section headers
+  rDark:     '1C2833',   // body text
+  rMid:      '4A5568',   // secondary text
+  rLight:    '8A9BB0',   // metadata (dates, tech)
 };
 
-function sanitizeFilename(str: string): string {
-  return str.replace(/[^a-zA-Z0-9]/g, '-').replace(/-+/g, '-').substring(0, 40);
+function sanitize(s: string): string {
+  return s.replace(/[^a-zA-Z0-9]/g, '-').replace(/-+/g, '-').substring(0, 40);
 }
 
-function leftSectionHeader(text: string): Paragraph {
+// All "no border" — used for every cell border to suppress DOCX grid lines
+const NO_BORDER = { style: BorderStyle.NONE, size: 0, color: 'FFFFFF', space: 0 };
+
+// ── Left (sidebar) helpers ───────────────────────────────────────────────────
+
+function sHead(text: string): Paragraph {
   return new Paragraph({
-    children: [new TextRun({ text: text.toUpperCase(), bold: true, size: 16, font: 'Calibri', color: COLOR.accent, characterSpacing: 40 })],
-    border: { bottom: { style: BorderStyle.SINGLE, size: 3, color: COLOR.accentLight } },
-    spacing: { before: 180, after: 80 },
+    children: [new TextRun({
+      text: text.toUpperCase(),
+      bold: true, size: 15, font: 'Calibri',
+      color: C.sideAccent, characterSpacing: 50,
+    })],
+    border: { bottom: { style: BorderStyle.SINGLE, size: 2, color: C.sideHr } },
+    spacing: { before: 180, after: 70 },
   });
 }
 
-function rightSectionHeader(text: string): Paragraph {
+function sBody(
+  runs: { text: string; bold?: boolean; italic?: boolean; size?: number; color?: string }[]
+): Paragraph {
   return new Paragraph({
-    children: [new TextRun({ text: text.toUpperCase(), bold: true, size: 18, font: 'Calibri', color: COLOR.accent, characterSpacing: 40 })],
-    border: { left: { style: BorderStyle.SINGLE, size: 18, color: COLOR.accentLight, space: 6 } },
+    children: runs.map(r => new TextRun({
+      text: r.text,
+      bold: r.bold ?? false,
+      italics: r.italic ?? false,
+      size: r.size ?? 16,
+      font: 'Calibri',
+      color: r.color ?? C.sideBody,
+    })),
+    spacing: { after: 36 },
+  });
+}
+
+// ── Right column helpers ─────────────────────────────────────────────────────
+
+function rHead(text: string): Paragraph {
+  return new Paragraph({
+    children: [new TextRun({
+      text: text.toUpperCase(),
+      bold: true, size: 18, font: 'Calibri',
+      color: C.rAccent, characterSpacing: 30,
+    })],
+    border: { left: { style: BorderStyle.SINGLE, size: 18, color: C.rBar, space: 6 } },
+    indent: { left: 110 },
     spacing: { before: 200, after: 80 },
-    indent: { left: 120 },
   });
 }
 
-function leftBody(text: string, bold = false, italic = false, size = 18): Paragraph {
+function rBody(
+  text: string,
+  opts: { bold?: boolean; italic?: boolean; size?: number; color?: string } = {}
+): Paragraph {
   return new Paragraph({
-    children: [new TextRun({ text: deAiText(text), bold, italics: italic, size, font: 'Calibri', color: COLOR.textMid })],
-    spacing: { after: 40 },
-  });
-}
-
-function rightBody(text: string, bold = false, italic = false, color = COLOR.textDark, size = 19): Paragraph {
-  return new Paragraph({
-    children: [new TextRun({ text: deAiText(text), bold, italics: italic, size, font: 'Calibri', color })],
+    children: [new TextRun({
+      text: deAiText(text),
+      bold: opts.bold ?? false,
+      italics: opts.italic ?? false,
+      size: opts.size ?? 19,
+      font: 'Calibri',
+      color: opts.color ?? C.rDark,
+    })],
     spacing: { after: 50 },
   });
 }
 
-function rightBullet(text: string): Paragraph {
+function rBullet(text: string): Paragraph {
   return new Paragraph({
-    children: [new TextRun({ text: `•  ${deAiText(text)}`, size: 19, font: 'Calibri', color: COLOR.textDark })],
-    spacing: { after: 50 },
-    indent: { left: 200 },
+    children: [new TextRun({
+      text: `•  ${deAiText(text)}`,
+      size: 18, font: 'Calibri', color: C.rDark,
+    })],
+    indent: { left: 160 },
+    spacing: { after: 48 },
   });
 }
 
-function buildLeftColumn(profile: any, photoPath?: string): Paragraph[] {
-  const paras: Paragraph[] = [];
+// ── Build left (sidebar) ─────────────────────────────────────────────────────
+
+function buildLeft(profile: any, photoPath?: string): Paragraph[] {
+  const out: Paragraph[] = [];
 
   // Optional photo
   if (photoPath && fs.existsSync(photoPath)) {
     try {
-      const imageData = fs.readFileSync(photoPath);
-      paras.push(
-        new Paragraph({
-          children: [
-            new ImageRun({
-              data: imageData,
-              transformation: { width: 100, height: 100 },
-            }),
-          ],
-          alignment: AlignmentType.CENTER,
-          spacing: { after: 120 },
-        })
-      );
-    } catch {
-      // Photo failed to load — skip it silently
-    }
+      const data = fs.readFileSync(photoPath);
+      out.push(new Paragraph({
+        children: [new ImageRun({ data, transformation: { width: 90, height: 90 } })],
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 120 },
+      }));
+    } catch { /* skip silently */ }
   }
 
   // Name
-  paras.push(
-    new Paragraph({
-      children: [new TextRun({ text: profile.personal.name, bold: true, size: 30, font: 'Calibri', color: COLOR.textDark })],
-      spacing: { after: 40 },
-    })
-  );
+  out.push(new Paragraph({
+    children: [new TextRun({ text: profile.personal.name, bold: true, size: 28, font: 'Calibri', color: C.sideName })],
+    spacing: { after: 40 },
+  }));
 
-  // Tagline
-  if (profile.tagline) {
-    const parts = profile.tagline.split('·').map((s: string) => s.trim());
-    for (const part of parts) {
-      paras.push(
-        new Paragraph({
-          children: [new TextRun({ text: part, size: 17, font: 'Calibri', color: COLOR.accentLight, italics: true })],
-          spacing: { after: 20 },
-        })
-      );
-    }
+  // Current role title
+  const role = profile.experience?.[0]?.role;
+  if (role) {
+    out.push(new Paragraph({
+      children: [new TextRun({ text: role, size: 16, font: 'Calibri', color: C.sideAccent, italics: true })],
+      spacing: { after: 20 },
+    }));
   }
 
-  // Divider
-  paras.push(new Paragraph({ border: { bottom: { style: BorderStyle.SINGLE, size: 3, color: COLOR.divider } }, spacing: { after: 60 } }));
+  // Location
+  out.push(new Paragraph({
+    children: [new TextRun({ text: profile.personal.location ?? '', size: 15, font: 'Calibri', color: C.sideBody })],
+    spacing: { after: 140 },
+  }));
 
-  // Contact section
-  paras.push(leftSectionHeader('Contact'));
-
-  const contactItems: { label: string; value: string }[] = [
-    { label: 'Email', value: profile.personal.email || '' },
-    { label: 'Phone', value: profile.personal.phone || '' },
-    { label: 'LinkedIn', value: (profile.personal.linkedin || '').replace('https://', '') },
-    { label: 'GitHub', value: (profile.personal.github || '').replace('https://', '') },
-    { label: 'Location', value: profile.personal.location || '' },
-  ].filter(c => c.value);
-
-  for (const item of contactItems) {
-    paras.push(
-      new Paragraph({
-        children: [
-          new TextRun({ text: `${item.label}: `, bold: true, size: 17, font: 'Calibri', color: COLOR.textMid }),
-          new TextRun({ text: item.value, size: 17, font: 'Calibri', color: COLOR.textMid }),
-        ],
-        spacing: { after: 40 },
-      })
-    );
+  // ── Contact ──────────────────────────────────────────────────────────────
+  out.push(sHead('Contact'));
+  const contacts: string[] = [
+    profile.personal.email,
+    profile.personal.phone,
+    (profile.personal.linkedin ?? '').replace('https://', ''),
+    (profile.personal.github ?? '').replace('https://', ''),
+  ].filter(Boolean);
+  for (const c of contacts) {
+    out.push(sBody([{ text: c, size: 15 }]));
   }
 
-  // Skills section
-  paras.push(leftSectionHeader('Skills'));
-
-  const skillGroups: { label: string; key: string }[] = [
-    { label: 'AI & LLM', key: 'ai_ml' },
-    { label: 'Automation', key: 'automation_orchestration' },
-    { label: 'Languages', key: 'languages' },
-    { label: 'Frameworks', key: 'frameworks_tools' },
-    { label: 'Databases', key: 'databases' },
-    { label: 'Infrastructure', key: 'infrastructure' },
-    { label: 'Compliance', key: 'compliance_security' },
+  // ── Skills — one line per category ──────────────────────────────────────
+  out.push(sHead('Skills'));
+  const skillGroups = [
+    { label: 'AI & LLM',    key: 'ai_ml' },
+    { label: 'Automation',  key: 'automation_orchestration' },
+    { label: 'Languages',   key: 'languages' },
+    { label: 'Frameworks',  key: 'frameworks_tools' },
+    { label: 'Databases',   key: 'databases' },
+    { label: 'Cloud',       key: 'infrastructure' },
+    { label: 'Compliance',  key: 'compliance_security' },
   ];
-
-  for (const group of skillGroups) {
-    const skills: string[] = profile.skills?.[group.key] || [];
-    if (!skills.length) continue;
-    paras.push(leftBody(group.label, true, false, 17));
-    paras.push(leftBody(skills.slice(0, 5).join(', '), false, false, 16));
+  for (const g of skillGroups) {
+    const items: string[] = (profile.skills?.[g.key] ?? []).slice(0, 5);
+    if (!items.length) continue;
+    out.push(sBody([
+      { text: g.label + '  ', bold: true, size: 14, color: C.sideAccent },
+      { text: items.join(', '), size: 14, color: C.sideBody },
+    ]));
   }
 
-  // Languages spoken
-  paras.push(leftSectionHeader('Languages'));
-  for (const lang of profile.languages || []) {
-    paras.push(leftBody(`${lang.language}  —  ${lang.level}`, false, false, 17));
+  // ── Languages spoken ────────────────────────────────────────────────────
+  out.push(sHead('Languages'));
+  for (const lang of profile.languages ?? []) {
+    out.push(sBody([
+      { text: lang.language, bold: true, size: 15 },
+      { text: `  ${lang.level}`, italic: true, size: 14, color: C.sideSmall },
+    ]));
   }
 
-  // Education
-  paras.push(leftSectionHeader('Education'));
-  paras.push(leftBody(profile.education.degree, true, false, 17));
-  paras.push(leftBody(profile.education.institution, false, false, 17));
-  paras.push(leftBody(profile.education.location, false, true, 16));
+  // ── Education ───────────────────────────────────────────────────────────
+  out.push(sHead('Education'));
+  out.push(sBody([{ text: profile.education.degree, bold: true, size: 15 }]));
+  out.push(sBody([{ text: profile.education.institution, size: 14 }]));
   if (profile.education.expected) {
-    paras.push(leftBody(`Expected ${profile.education.expected}`, false, false, 16));
+    out.push(sBody([{ text: `Expected ${profile.education.expected}`, italic: true, size: 13, color: C.sideSmall }]));
   }
 
-  return paras;
+  return out;
 }
 
-function buildRightColumn(profile: any, tailored: TailoredResume): Paragraph[] {
-  const paras: Paragraph[] = [];
+// ── Build right column ───────────────────────────────────────────────────────
 
-  // Professional Summary
-  paras.push(rightSectionHeader('Professional Summary'));
-  paras.push(rightBody(tailored.tailoredSummary));
+function buildRight(profile: any, tailored: TailoredResume): Paragraph[] {
+  const out: Paragraph[] = [];
 
-  // Core Skills
-  paras.push(rightSectionHeader('Core Skills'));
-  paras.push(
-    new Paragraph({
-      children: [new TextRun({ text: tailored.highlightedSkills.join('  ·  '), size: 19, font: 'Calibri', color: COLOR.textMid })],
-      spacing: { after: 60 },
-    })
-  );
+  // Summary
+  out.push(rHead('Summary'));
+  out.push(rBody(tailored.tailoredSummary));
 
-  // Professional Experience — comes before projects (standard resume order)
-  paras.push(rightSectionHeader('Experience'));
+  // Core skills — horizontal tag line
+  out.push(rHead('Core Skills'));
+  out.push(new Paragraph({
+    children: [new TextRun({
+      text: tailored.highlightedSkills.join('  ·  '),
+      size: 18, font: 'Calibri', color: C.rMid,
+    })],
+    spacing: { after: 60 },
+  }));
 
-  for (const exp of profile.experience || []) {
-    paras.push(
-      new Paragraph({
-        children: [
-          new TextRun({ text: exp.role, bold: true, size: 21, font: 'Calibri', color: COLOR.textDark }),
-          new TextRun({ text: `  ·  ${exp.company}`, size: 19, font: 'Calibri', color: COLOR.textLight }),
-        ],
-        spacing: { before: 100, after: 30 },
-      })
-    );
-    paras.push(rightBody(`${exp.location || ''}  ·  ${exp.period || ''}`, false, true, COLOR.textLight, 17));
-    for (const b of exp.bullets || []) {
-      paras.push(rightBullet(b));
-    }
+  // Experience — BEFORE projects (standard order)
+  out.push(rHead('Experience'));
+  for (const exp of profile.experience ?? []) {
+    out.push(new Paragraph({
+      children: [
+        new TextRun({ text: exp.role, bold: true, size: 20, font: 'Calibri', color: C.rDark }),
+        new TextRun({ text: `  ·  ${exp.company}`, size: 17, font: 'Calibri', color: C.rLight }),
+      ],
+      spacing: { before: 100, after: 22 },
+    }));
+    out.push(rBody(
+      `${exp.location ?? ''}  ·  ${exp.period ?? ''}`,
+      { italic: true, size: 16, color: C.rLight }
+    ));
+    for (const b of exp.bullets ?? []) out.push(rBullet(b));
   }
 
-  // Selected Projects
-  paras.push(rightSectionHeader('Selected Projects'));
+  // Projects
+  out.push(rHead('Selected Projects'));
+  for (const id of tailored.projectOrder) {
+    const proj = profile.projects?.find((p: any) => p.id === id);
+    if (!proj) continue;
+    const bullets: string[] = tailored.rewrittenBullets[id] ?? proj.bullets ?? [];
 
-  for (const projectId of tailored.projectOrder) {
-    const project = profile.projects?.find((p: any) => p.id === projectId);
-    if (!project) continue;
+    out.push(new Paragraph({
+      children: [
+        new TextRun({ text: proj.title, bold: true, size: 20, font: 'Calibri', color: C.rDark }),
+        new TextRun({ text: `  ·  ${proj.company ?? proj.client ?? ''}`, size: 17, font: 'Calibri', color: C.rLight }),
+      ],
+      spacing: { before: 110, after: 22 },
+    }));
 
-    const bullets = tailored.rewrittenBullets[projectId] || project.bullets || [];
+    if (proj.status) {
+      out.push(rBody(proj.status, { italic: true, size: 16, color: C.rLight }));
+    }
 
-    paras.push(
-      new Paragraph({
+    for (const b of bullets) out.push(rBullet(b));
+
+    if (proj.tech_stack?.length) {
+      out.push(new Paragraph({
         children: [
-          new TextRun({ text: project.title, bold: true, size: 21, font: 'Calibri', color: COLOR.textDark }),
-          new TextRun({ text: `  ·  ${project.company || project.client || ''}`, size: 19, font: 'Calibri', color: COLOR.textLight }),
+          new TextRun({ text: 'Stack  ', bold: true, size: 15, font: 'Calibri', color: C.rMid }),
+          new TextRun({ text: proj.tech_stack.join(', '), size: 15, font: 'Calibri', color: C.rLight }),
         ],
-        spacing: { before: 120, after: 30 },
-      })
-    );
-
-    if (project.status) {
-      paras.push(rightBody(project.status, false, true, COLOR.textLight, 17));
-    }
-
-    for (const b of bullets) {
-      paras.push(rightBullet(b));
-    }
-
-    if (project.tech_stack?.length) {
-      paras.push(
-        new Paragraph({
-          children: [
-            new TextRun({ text: 'Tech: ', bold: true, size: 17, font: 'Calibri', color: COLOR.textMid }),
-            new TextRun({ text: project.tech_stack.join(', '), size: 17, font: 'Calibri', color: COLOR.textLight }),
-          ],
-          spacing: { after: 80 },
-        })
-      );
+        spacing: { after: 80 },
+      }));
     }
   }
 
   // Achievements
   if (profile.achievements?.length) {
-    paras.push(rightSectionHeader('Achievements'));
-    for (const a of profile.achievements.slice(0, 3)) {
-      paras.push(rightBullet(a));
-    }
+    out.push(rHead('Achievements'));
+    for (const a of profile.achievements.slice(0, 3)) out.push(rBullet(a));
   }
 
-  return paras;
+  return out;
 }
 
-// Two-column visual resume — Teamtailor-safe (human-reviewed PDF)
+// ── Main export ──────────────────────────────────────────────────────────────
+
 export async function generateVisualResumeDOCX(
   profile: any,
   tailored: TailoredResume,
   parsedJD: ParsedJD,
   photoPath?: string
 ): Promise<string> {
-  const leftContent = buildLeftColumn(profile, photoPath);
-  const rightContent = buildRightColumn(profile, tailored);
-
-  const noBorder = { style: BorderStyle.NONE, size: 0, color: COLOR.white };
+  const leftContent  = buildLeft(profile, photoPath);
+  const rightContent = buildRight(profile, tailored);
 
   const table = new Table({
+    width: { size: AVAIL_W, type: WidthType.DXA },
+    // Remove all outer table borders
+    borders: {
+      top:     NO_BORDER,
+      bottom:  NO_BORDER,
+      left:    NO_BORDER,
+      right:   NO_BORDER,
+    },
     rows: [
       new TableRow({
         children: [
+          // ── Left: dark navy sidebar ──────────────────────────────────────
           new TableCell({
-            width: { size: 33, type: WidthType.PERCENTAGE },
-            shading: { fill: COLOR.leftBg, type: ShadingType.CLEAR, color: 'auto' },
-            borders: { top: noBorder, bottom: noBorder, left: noBorder, right: { style: BorderStyle.SINGLE, size: 3, color: COLOR.divider } },
-            margins: { top: 220, bottom: 220, left: 280, right: 280 },
+            width: { size: LEFT_W, type: WidthType.DXA },
+            shading: { fill: C.sidebar, type: ShadingType.CLEAR, color: 'auto' },
+            borders: { top: NO_BORDER, bottom: NO_BORDER, left: NO_BORDER, right: NO_BORDER },
+            margins: { top: 280, bottom: 280, left: 280, right: 260 },
             verticalAlign: VerticalAlign.TOP,
             children: leftContent,
           }),
+          // ── Right: white content column ──────────────────────────────────
           new TableCell({
-            width: { size: 67, type: WidthType.PERCENTAGE },
-            shading: { fill: COLOR.white, type: ShadingType.CLEAR, color: 'auto' },
-            borders: { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder },
-            margins: { top: 220, bottom: 220, left: 320, right: 240 },
+            width: { size: RIGHT_W, type: WidthType.DXA },
+            shading: { fill: 'FFFFFF', type: ShadingType.CLEAR, color: 'auto' },
+            borders: { top: NO_BORDER, bottom: NO_BORDER, left: NO_BORDER, right: NO_BORDER },
+            margins: { top: 280, bottom: 280, left: 300, right: 220 },
             verticalAlign: VerticalAlign.TOP,
             children: rightContent,
           }),
         ],
       }),
     ],
-    width: { size: 100, type: WidthType.PERCENTAGE },
   });
 
   const doc = new Document({
     sections: [{
       properties: {
-        page: { margin: { top: 720, bottom: 720, left: 720, right: 720 } },
+        page: {
+          margin: { top: MARGIN, bottom: MARGIN, left: MARGIN, right: MARGIN },
+        },
       },
       children: [table],
     }],
   });
 
-  const company = sanitizeFilename(parsedJD.company);
-  const role = sanitizeFilename(parsedJD.role);
+  const co = sanitize(parsedJD.company);
+  const ro = sanitize(parsedJD.role);
   const suffix = photoPath ? '_Photo' : '';
-  const filename = `${company}_${role}_Visual${suffix}_Timothy.docx`;
-  const outputPath = path.join(process.cwd(), 'output', filename);
+  const outPath = path.join(process.cwd(), 'output', `${co}_${ro}_Visual${suffix}_Timothy.docx`);
 
-  fs.writeFileSync(outputPath, await Packer.toBuffer(doc));
-  return outputPath;
+  fs.writeFileSync(outPath, await Packer.toBuffer(doc));
+  return outPath;
 }
