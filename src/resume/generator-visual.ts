@@ -12,6 +12,7 @@ import {
   VerticalAlign,
   ShadingType,
   ImageRun,
+  TableLayoutType,
 } from 'docx';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -304,6 +305,11 @@ export async function generateVisualResumeDOCX(
 
   const table = new Table({
     width: { size: AVAIL_W, type: WidthType.DXA },
+    // CRITICAL: columnWidths generates the <w:tblGrid>. Without it the grid
+    // defaults to ~100 twips per column and every character wraps to its own
+    // line. FIXED layout makes Word honour these exact widths.
+    columnWidths: [LEFT_W, RIGHT_W],
+    layout: TableLayoutType.FIXED,
     // Remove all outer table borders
     borders: {
       top:     NO_BORDER,
