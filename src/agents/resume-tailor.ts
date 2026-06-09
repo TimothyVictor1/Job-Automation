@@ -13,10 +13,17 @@ export interface TailoredResume {
   tailoringNotes: string;
 }
 
+export interface ConfirmedSkill {
+  skill: string;
+  category: 'must-have' | 'nice-to-have';
+  note: string;
+}
+
 export async function tailorResume(
   profile: any,
   projectsMd: string,
-  parsedJD: ParsedJD
+  parsedJD: ParsedJD,
+  confirmedSkills?: ConfirmedSkill[]
 ): Promise<TailoredResume> {
   const client = getClient();
 
@@ -36,6 +43,11 @@ ${JSON.stringify(parsedJD, null, 2)}
 
 TAILOR AGENT NOTE from profile:
 ${profile._meta?.tailor_agent_note || ''}
+${confirmedSkills && confirmedSkills.length > 0 ? `
+ADDITIONAL SKILLS CONFIRMED BY TIMOTHY (treat these as verified facts — use Timothy's own words):
+${confirmedSkills.map(s => `- [${s.category.toUpperCase()}] "${s.skill}": ${s.note}`).join('\n')}
+These were self-reported in response to JD gaps. Include them where relevant to this role. You may write bullets or summary lines referencing these, using the exact context Timothy provided above.
+` : ''}
 
 Instructions:
 1. Select 3-4 projects from the JSON profile that best match this specific JD (use the tailor_agent_note guidance above)

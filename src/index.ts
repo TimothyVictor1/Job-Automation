@@ -34,6 +34,51 @@ function ask(question: string): Promise<string> {
   });
 }
 
+export interface ConfirmedSkill {
+  skill: string;
+  category: 'must-have' | 'nice-to-have';
+  note: string;
+}
+
+async function confirmMissingSkills(screen: ReturnType<typeof preScreen>): Promise<ConfirmedSkill[]> {
+  const confirmed: ConfirmedSkill[] = [];
+  const hasMissing = screen.missingMustHaves.length > 0 || screen.missingNiceToHaves.length > 0;
+  if (!hasMissing) return confirmed;
+
+  console.log(chalk.cyan('\n📋 Some required skills weren\'t found in your profile.'));
+  console.log(chalk.gray('   For each one, say whether you have it and describe where/when — the AI will use your words in your resume.\n'));
+
+  // Must-haves — always prompt
+  for (const skill of screen.missingMustHaves) {
+    const has = await ask(chalk.yellow(`  Do you have "${skill}"? (y/n): `));
+    if (has.toLowerCase() === 'y') {
+      const note = await ask(chalk.yellow(`    Describe briefly (e.g. "used Python daily at Tech Concept Lab for agentic pipelines"): `));
+      if (note) confirmed.push({ skill, category: 'must-have', note });
+    }
+  }
+
+  // Nice-to-haves — offer as a batch
+  if (screen.missingNiceToHaves.length > 0) {
+    console.log('');
+    const doNice = await ask(chalk.gray(`  Address ${screen.missingNiceToHaves.length} missing nice-to-haves too? (y/n): `));
+    if (doNice.toLowerCase() === 'y') {
+      for (const skill of screen.missingNiceToHaves) {
+        const has = await ask(chalk.yellow(`  Do you have "${skill}"? (y/n): `));
+        if (has.toLowerCase() === 'y') {
+          const note = await ask(chalk.yellow(`    Describe briefly: `));
+          if (note) confirmed.push({ skill, category: 'nice-to-have', note });
+        }
+      }
+    }
+  }
+
+  if (confirmed.length > 0) {
+    console.log(chalk.green(`\n  ✅ ${confirmed.length} skill(s) confirmed — the AI will include these in your resume.\n`));
+  }
+
+  return confirmed;
+}
+
 function printPreScreenReport(screen: ReturnType<typeof preScreen>): void {
   const scoreColor = screen.fitScore >= 7 ? chalk.green : screen.fitScore >= 5 ? chalk.yellow : chalk.red;
   const recIcon = screen.recommendation === 'apply' ? '✅' : screen.recommendation === 'review-gaps' ? '⚠️ ' : '🚫';
@@ -96,6 +141,9 @@ async function main() {
   const screen = preScreen(parsedJD, profile);
   printPreScreenReport(screen);
 
+  // Confirm any missing skills before deciding to proceed
+  const confirmedSkills = await confirmMissingSkills(screen);
+
   if (screen.recommendation === 'skip') {
     const force = await ask(chalk.red('🚫 Low fit or hard blockers detected. Apply anyway? (y/n): '));
     if (force.toLowerCase() !== 'y') {
@@ -103,7 +151,7 @@ async function main() {
       process.exit(0);
     }
   } else if (screen.recommendation === 'review-gaps') {
-    const proceed = await ask(chalk.yellow('⚠️  Gaps detected above. Continue to tailoring? (y/n): '));
+    const proceed = await ask(chalk.yellow('⚠️  Continue to tailoring? (y/n): '));
     if (proceed.toLowerCase() !== 'y') {
       console.log(chalk.gray('Exiting.'));
       process.exit(0);
@@ -112,7 +160,7 @@ async function main() {
 
   // Step 5: Tailor resume
   console.log(chalk.gray('  Tailoring resume (grounded to profile)...'));
-  const tailored = await tailorResume(profile, projectsMd, parsedJD);
+  const tailored = await tailorResume(profile, projectsMd, parsedJD, confirmedSkills);
   console.log(chalk.green(`✅ Fit score: ${tailored.fitScore}/10 — ${tailored.fitReason}`));
   console.log(chalk.gray(`   Projects: ${tailored.selectedProjectIds.join(', ')}`));
   if (tailored.tailoringNotes) {
